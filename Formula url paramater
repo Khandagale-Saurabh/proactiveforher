@@ -1,0 +1,1 @@
+"&" & "source=" & TEXT(Source__c) & "&acq=" & TEXT(Acquisition__c) & "&med1=" & TEXT(Medium1__c) & "&med2=" & TEXT(Medium2__c) & "&int=" & TEXT(Interaction__c) & "&c1=" & TEXT(Campaign1__c) & "&prod=" & TEXT(Product__c)
