@@ -140,3 +140,183 @@ Redirect(@Link)
 
 ]%%
 ```
+
+Fair
+```
+%%[
+set @URL = QueryParameter('url')
+set @UTMDirect = QueryParameter('u')
+set @Variation = QueryParameter('pr')
+set @VariationAd = QueryParameter('prad')
+set @Quiz = QueryParameter('v')
+
+SET @Group = "whatsapp"
+
+
+IF NOT(ISNULL(@Quiz)) AND NOT(EMPTY(@Quiz)) THEN
+  
+  IF indexOf(@URL, "dysfunction") > 0 THEN
+  
+    SET @Link = "https://api.whatsapp.com/send?phone=919002019002&text=I%20got%20my%20assessment%20results.%20Tell%20me%20about%20the%20in-clinic%20painful%20sex%20checkup."
+  
+  ELSEIF indexOf(@URL, "cervical") > 0 THEN
+  
+    SET @Link = "https://api.whatsapp.com/send?phone=919002019002&text=I%20got%20my%20assessment%20results.%20Tell%20me%20about%20cervical%20cancer%20checkup."
+    
+   ELSEIF @Quiz == "assessment" THEN
+  
+    SET @Link = "https://api.whatsapp.com/send?phone=919002019002&text=I%20got%20my%20assessment%20results.%20Tell%20me%20more."
+  
+  ELSE
+  
+    SET @LinkDefault = "https://api.whatsapp.com/send?phone=919002019002&text=Hi%2C%20I%20wanted%20some%20help.%20I%20was%20browsing%20your%20website%20on"
+    
+    SET @Link = Concat(@LinkDefault, "%20", @URL)
+  
+  ENDIF
+
+ELSEIF NOT(ISNULL(@URL)) AND NOT(EMPTY(@URL)) THEN
+
+  set @URL = LOWERCASE(Replace(Replace(Replace(Replace(Replace(@URL,"%26","&"),"%2f","/"),"%3d","="),"%3f","?"),"%3a",":"))
+
+  SET @QueryStringStart = IndexOf(@URL, "?")+1
+
+  IF @QueryStringStart > 19 THEN
+  
+    SET @queryString = Substring(@URL,ADD(@QueryStringStart,1))
+    SET @params = BuildRowSetFromString(@queryString, "&")
+    
+    FOR @i = 1 TO RowCount(@params) DO
+        SET @param = Field(Row(@params, @i), 1)
+        SET @paramName = Substring(@param, 1, Subtract(IndexOf(@param, "="),1))
+        SET @paramValue = Substring(@param, ADD(IndexOf(@param, "="),1), Length(@param))
+        
+        IF @paramName == "source" THEN
+        SET @Source = @paramValue
+        
+        ELSEIF @paramName == "acq" THEN
+        SET @Acquisition = @paramValue
+        
+        ELSEIF @paramName == "med1" THEN
+        SET @Medium1 = @paramValue
+        
+        ELSEIF @paramName == "med2" THEN
+        SET @Medium2 = @paramValue
+        
+        ELSEIF @paramName == "int" THEN
+        SET @Interaction = @paramValue
+        
+        ELSEIF @paramName == "c1" THEN
+        SET @Campaign1 = @paramValue
+        
+        ELSEIF @paramName == "prod" THEN
+        SET @Product = @paramValue
+        
+        ELSE
+        ENDIF
+    NEXT @i
+    
+    IF NOT(ISNULL(@Source)) AND NOT(EMPTY(@Source)) AND NOT(ISNULL(@Acquisition)) AND NOT(EMPTY(@Acquisition)) AND NOT(ISNULL(@Medium1)) AND NOT(EMPTY(@Medium1)) AND NOT(ISNULL(@Medium2)) AND NOT(EMPTY(@Medium2)) AND NOT(ISNULL(@Interaction)) AND NOT(EMPTY(@Interaction)) AND NOT(ISNULL(@Campaign1)) AND NOT(EMPTY(@Campaign1)) THEN
+    
+      SET @UTM = LOOKUP("UTM__c_Salesforce","Id","Source__c",@Source,"Acquisition__c",@Acquisition,"Medium1__c",@Medium1,"Medium2__c",@Medium2,"Interaction__c",@Interaction,"Campaign1__c",@Campaign1,"Product__c",@Product)
+      
+      IF NOT(ISNULL(@UTM)) AND NOT(EMPTY(@UTM)) THEN
+      
+        SET @Link = LOOKUP("Keyword_Campaign__c_Salesforce","Actual_WhatsApp_Link__c","UTM__c",@UTM,"isActive__c","True")
+      
+      ELSE
+      ENDIF
+    
+    ELSE
+    ENDIF
+    
+  ELSE  
+  ENDIF
+
+ELSEIF NOT(ISNULL(@UTMDirect)) AND NOT(EMPTY(@UTMDirect)) THEN
+
+  SET @UTMRows = LookupRows("UTM__c_Salesforce","Name",@UTMDirect)
+  
+  IF rowcount(@UTMRows) > 0 THEN
+  
+    SET @UTMRow = ROW(@UTMRows, 1)
+    SET @Source = Field(@UTMRow,"Source__c")
+    SET @Acquisition = Field(@UTMRow,"Acquisition__c")
+    SET @Medium1 = Field(@UTMRow,"Medium1__c")
+    SET @Medium2 = Field(@UTMRow,"Medium2__c")
+    SET @Interaction = Field(@UTMRow,"Interaction__c")
+    SET @Campaign1 = Field(@UTMRow,"Campaign1__c")
+    SET @Product = Field(@UTMRow,"Product__c")
+  
+  ELSE
+  ENDIF
+
+ELSE
+ENDIF
+
+
+IF NOT(ISNULL(@Variation)) AND NOT(EMPTY(@Variation)) THEN
+
+  SET @Link = LOOKUP("Keyword_Campaign__c_Salesforce","Actual_WhatsApp_Link__c","Identifier__c",@Variation,"isActive__c","True")
+
+ELSE
+ENDIF
+
+IF NOT(ISNULL(@VariationAd)) AND NOT(EMPTY(@VariationAd)) THEN
+
+  SET @Link = LOOKUP("Keyword_Campaign__c_Salesforce","Actual_WhatsApp_Link__c","Identifier__c",@VariationAd,"isActive__c","True")
+
+ELSE
+ENDIF
+
+IF ISNULL(@Link) OR EMPTY(@Link) THEN
+
+  SET @Link = "https://api.whatsapp.com/send?phone=919002019002&text=Hello!%20I%20require%20assistance"
+
+ELSE
+ENDIF
+
+set @CurrentDate = DateAdd(NOW(),11,"H")
+set @CurrentDate = DateAdd(@CurrentDate,30,"MI")
+
+InsertData("Cloud Pages - Click Tracking","Group",@Group,"ClickDateTime_IST",@CurrentDate,"URL",@Link,"UTM_Source",@Source,"UTM_Acquisition",@Acquisition,"UTM_Medium1",@Medium1,"UTM_Medium2",@Medium2,"UTM_Interaction",@Interaction,"UTM_Campaign1",@Campaign1,"UTM_Product",@Product,"Source_URL",@URL)
+
+Redirect(@Link)
+
+]%%
+
+
+Name = %%=v(@name1)=%% <br>
+
+
+
+```
+
+
+RUF
+
+```
+%%[
+var @rs, @fname, @lname, @name1
+
+/* Retrieve contact data */
+Set @rs = RetrieveSalesforceObjects('Contact', 'Id, FirstName, LastName', 'Id', '=', '0035g000013FL3JAAW')
+
+/*Set @Data = RetrieveSalesforceObjects('Keyword_Campaign__c', 'Id, Name, UTM__c', 'name', '=', 'Tell me more about the advance full body check up!')  */
+Set @Data = RetrieveSalesforceObjects('UTM__c', 'Name,Source__c', 'Name', '=', 'lg_gn_lp_wa_hpv') 
+
+/* Check if records were returned */
+if RowCount(@Data) > 0 then
+    /* Retrieve the first row */
+    Set @value = Row(@Data, 1)
+    /* Retrieve the value of the 'Name' field */
+    Set @name1 = FIELD(@value, 'Name')
+else
+    /* Handle case when no records are found */
+    Set @name1 = "No matching record found"
+endif
+]%%
+
+Name = %%=v(@name1)=%% <br>
+
+```
